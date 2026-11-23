@@ -1,13 +1,14 @@
-# Portainer stack — pulls the poller image from GHCR + Postgres.
-#
-# Deploy:
-# 1. In Portainer: Stacks → Add stack → Web editor (paste this file) or upload.
-# 2. Set env vars from deploy/portainer.env.example (change POSTGRES_PASSWORD).
-# 3. If the GHCR package is still private, add a Portainer registry for ghcr.io
-#    (GitHub PAT with read:packages) and assign it to this stack.
-# 4. Deploy. Poller applies sql/001_schema.sql on startup.
+# Portainer stack — pulls the poller image from GHCR.
 #
 # Image: ghcr.io/ay5lee/sushiro-queue-collector:latest
+# Repo:  https://github.com/ay5lee/sushiro-queue-collector
+#
+# Deploy:
+# 1. Create a Portainer stack from this file (Web editor or repo sync).
+# 2. Set stack env vars from deploy/portainer.env.example.
+# 3. If the GHCR package is private, add a Portainer registry credential
+#    for ghcr.io (GitHub PAT with read:packages) and assign it to the stack.
+#
 # Local Mac development still uses ../docker-compose.yml (build: .).
 
 services:
@@ -19,8 +20,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-sushiro_queue}
     volumes:
       - sushiro_pgdata:/var/lib/postgresql/data
-      # Schema is also applied by the poller on startup; optional init mount:
-      # - ./sql/001_schema.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sushiro} -d ${POSTGRES_DB:-sushiro_queue}"]
       interval: 5s
@@ -43,6 +42,8 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       LOG_JSON: ${LOG_JSON:-1}
       STORE_HOURS_JSON: ${STORE_HOURS_JSON:-}
+      MAX_REQUESTS_PER_MINUTE: ${MAX_REQUESTS_PER_MINUTE:-90}
+      STORE_SYNC_INTERVAL_SECONDS: ${STORE_SYNC_INTERVAL_SECONDS:-21600}
     restart: unless-stopped
 
 volumes:

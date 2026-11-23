@@ -1,5 +1,6 @@
 # Local development stack (builds the poller from this directory).
-# For Portainer / GHCR deploy, see deploy/portainer-stack.yml.
+# Requires: cp .env.example .env
+# Portainer / GHCR: deploy/portainer-stack.yml → ghcr.io/ay5lee/sushiro-queue-collector
 
 services:
   db:

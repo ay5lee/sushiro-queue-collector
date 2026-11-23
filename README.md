@@ -2,8 +2,8 @@
 
 Local Docker + Postgres poller that snapshots every Hong Kong Sushiro store’s queue state from the unofficial **SUSHI-PASS** APIs. Prediction / “when to leave” is **out of scope** for v1.
 
-**Repo:** [ay5lee/sushiro-queue-collector](https://github.com/ay5lee/sushiro-queue-collector)  
-**Image:** `ghcr.io/ay5lee/sushiro-queue-collector`
+- **GitHub:** https://github.com/ay5lee/sushiro-queue-collector
+- **Image:** `ghcr.io/ay5lee/sushiro-queue-collector`
 
 ## Terms / caveats
 
@@ -11,7 +11,7 @@ Local Docker + Postgres poller that snapshots every Hong Kong Sushiro store’s 
 - Polling may conflict with Sushiro / SUSHI-PASS terms. Use for **personal / research** only. Do not scrape aggressively or redistribute as an official feed.
 - Wait times and called numbers reflect whatever the app exposes at poll time — not ground-truth seating.
 
-## Clone + local compose (Mac / Docker)
+## Quick start (Mac)
 
 ```bash
 git clone https://github.com/ay5lee/sushiro-queue-collector.git
@@ -35,51 +35,6 @@ python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 python scripts/smoke_api_map.py
 ```
-
-## GHCR image
-
-GitHub Actions (`.github/workflows/docker-publish.yml`) builds and pushes on every push to `main`, on tags `v*`, and via **workflow_dispatch**:
-
-| Tag | When |
-|-----|------|
-| `latest` | push to `main` |
-| `1.2.3`, `1.2` | semver from tag `v1.2.3` |
-| `sha-<short>` | every build |
-
-Pull:
-
-```bash
-docker pull ghcr.io/ay5lee/sushiro-queue-collector:latest
-```
-
-Auth uses `GITHUB_TOKEN` with `packages: write` — no extra secrets required for the workflow.
-
-### Package visibility
-
-The repo is **public**, but the first GHCR publish often creates a **private** package. For anonymous / Portainer pulls without a PAT, after the first successful `docker-publish` run:
-
-1. Open [github.com/ay5lee?tab=packages](https://github.com/ay5lee?tab=packages) (or the package link from the Actions log).
-2. Open **sushiro-queue-collector** → **Package settings** → **Change visibility** → **Public**.
-
-If you keep it private, Portainer needs a GHCR registry credential (PAT with `read:packages`).
-
-### First Actions run
-
-On a brand-new repo you may need to:
-
-1. Enable Actions if GitHub prompts (Settings → Actions → General → allow workflows).
-2. Approve the first workflow run if the account/org requires approval for first-time workflows.
-3. Confirm the default `GITHUB_TOKEN` can write packages (Settings → Actions → General → Workflow permissions → Read and write, or rely on the workflow’s `permissions: packages: write`).
-
-## Portainer deploy
-
-1. Wait until `ghcr.io/ay5lee/sushiro-queue-collector:latest` exists (green `docker-publish` run).
-2. Set package visibility (public preferred) or add a Portainer registry for `ghcr.io`.
-3. **Stacks → Add stack** → paste [`deploy/portainer-stack.yml`](deploy/portainer-stack.yml) (or upload).
-4. Add env vars from [`deploy/portainer.env.example`](deploy/portainer.env.example) — change `POSTGRES_PASSWORD` / `DATABASE_URL`.
-5. Deploy. Poller waits for Postgres health, applies schema, then sweeps on the store-hours schedule.
-
-Local Mac development still uses `docker-compose.yml` (`build: .`), not the Portainer stack.
 
 ## What it collects
 
@@ -111,20 +66,32 @@ References (mapping only): [scmlewis/sushiro-hk-live](https://github.com/scmlewi
 
 ```
 .
-├── Dockerfile                 # poller image
+├── Dockerfile
 ├── docker-compose.yml         # local Postgres + build
 ├── .env.example
 ├── requirements.txt
 ├── sql/001_schema.sql
-├── poller/                    # Python package (python -m poller)
+├── poller/                    # python -m poller
 ├── scripts/smoke_api_map.py
 ├── deploy/
-│   ├── portainer-stack.yml    # GHCR pull stack for Portainer
+│   ├── portainer-stack.yml    # Portainer / GHCR stack
 │   └── portainer.env.example
 └── .github/workflows/
-    ├── ci.yml                 # pytest + import smoke
+    ├── ci.yml
     └── docker-publish.yml     # → ghcr.io/ay5lee/sushiro-queue-collector
 ```
+
+## GHCR + Portainer
+
+On push to `main` (and tags `v*`), [`.github/workflows/docker-publish.yml`](.github/workflows/docker-publish.yml) builds and pushes:
+
+- `ghcr.io/ay5lee/sushiro-queue-collector:latest` (main)
+- semver tags from `v*`
+- `sha-…` tags
+
+**Portainer:** deploy [`deploy/portainer-stack.yml`](deploy/portainer-stack.yml) as a stack, set env from [`deploy/portainer.env.example`](deploy/portainer.env.example). If the package is private, register `ghcr.io` with a PAT that has `read:packages`.
+
+After the first successful publish, you can mark the GHCR package public (GitHub → Packages) if you want unauthenticated pulls.
 
 ## Config
 
