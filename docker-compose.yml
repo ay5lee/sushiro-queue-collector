@@ -1,6 +1,7 @@
 # Local development stack (builds the poller from this directory).
-# Requires: cp .env.example .env
-# Portainer / GHCR: deploy/portainer-stack.yml → ghcr.io/ay5lee/sushiro-queue-collector
+# Optional: cp .env.example .env for overrides (Compose interpolates .env;
+# there is no env_file: — so Portainer/GitOps will not require a .env file).
+# Portainer / GHCR: use deploy/portainer-stack.yml → ghcr.io/ay5lee/sushiro-queue-collector
 
 services:
   db:
@@ -26,10 +27,18 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    env_file:
-      - .env
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql://sushiro:sushiro@db:5432/sushiro_queue}
+      SWEEP_INTERVAL_SECONDS: ${SWEEP_INTERVAL_SECONDS:-60}
+      CONCURRENCY: ${CONCURRENCY:-4}
+      DEFAULT_OPEN_TIME: ${DEFAULT_OPEN_TIME:-10:30}
+      DEFAULT_CLOSE_TIME: ${DEFAULT_CLOSE_TIME:-22:00}
+      FORCE_POLL: ${FORCE_POLL:-0}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      LOG_JSON: ${LOG_JSON:-1}
+      STORE_HOURS_JSON: ${STORE_HOURS_JSON:-}
+      MAX_REQUESTS_PER_MINUTE: ${MAX_REQUESTS_PER_MINUTE:-90}
+      STORE_SYNC_INTERVAL_SECONDS: ${STORE_SYNC_INTERVAL_SECONDS:-21600}
     restart: unless-stopped
 
 volumes:

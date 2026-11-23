@@ -89,7 +89,11 @@ On push to `main` (and tags `v*`), [`.github/workflows/docker-publish.yml`](.git
 - semver tags from `v*`
 - `sha-…` tags
 
-**Portainer:** deploy [`deploy/portainer-stack.yml`](deploy/portainer-stack.yml) as a stack, set env from [`deploy/portainer.env.example`](deploy/portainer.env.example). If the package is private, register `ghcr.io` with a PAT that has `read:packages`.
+**Portainer (GitOps):**
+
+1. Create a stack from the Git repo. Set **Compose path** to `deploy/portainer-stack.yml` (not root `docker-compose.yml`).
+2. Paste env vars from [`deploy/portainer.env.example`](deploy/portainer.env.example) into the Portainer stack **Environment variables** UI (change `POSTGRES_PASSWORD` / `DATABASE_URL`). There is **no** `env_file: .env` and no checked-in `.env` — GitOps clones do not include one.
+3. If the package is private, register `ghcr.io` with a PAT that has `read:packages`.
 
 After the first successful publish, you can mark the GHCR package public (GitHub → Packages) if you want unauthenticated pulls.
 
