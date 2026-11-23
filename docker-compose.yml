@@ -1,0 +1,35 @@
+# Local development stack (builds the poller from this directory).
+# For Portainer / GHCR deploy, see deploy/portainer-stack.yml.
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-sushiro}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sushiro}
+      POSTGRES_DB: ${POSTGRES_DB:-sushiro_queue}
+    ports:
+      - "5432:5432"
+    volumes:
+      - sushiro_pgdata:/var/lib/postgresql/data
+      - ./sql/001_schema.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sushiro} -d ${POSTGRES_DB:-sushiro_queue}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  poller:
+    build: .
+    image: sushiro-queue-collector:local
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://sushiro:sushiro@db:5432/sushiro_queue}
+    restart: unless-stopped
+
+volumes:
+  sushiro_pgdata:
